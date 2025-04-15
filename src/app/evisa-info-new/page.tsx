@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 
-export default function EVisaInfo() {
+export default function EVisaInfoNew() {
   const { language, setLanguage, t } = useLanguage();
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
@@ -140,7 +140,7 @@ export default function EVisaInfo() {
         {/* Action Buttons */}
         <div className="flex justify-center gap-4 pt-6">
           <Button
-            onClick={() => router.push('/application-form')}
+            onClick={() => router.push('/evisa-info')}
             className="bg-[#f6970f] hover:bg-[#e58a0a] text-white px-8 py-3 text-lg font-medium"
           >
             {language === 'en' ? 'Online Application Form' : '線上申請表'}
