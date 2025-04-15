@@ -287,12 +287,16 @@ export default function EVisaForm() {
 
   const [errors, setErrors] = useState<FormErrors>({});
 
-  // Lọc danh sách quốc gia dựa trên từ khóa tìm kiếm
+  // State để lưu trữ kết quả hình ảnh
+  const [resultImage, setResultImage] = useState<string | null>(null);
+  const [resultError, setResultError] = useState<string | null>(null);
+
+  // Lọc danh sách quốc gia
   const filteredCountries = countries.filter(country =>
     country.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Xử lý khi click ra ngoài dropdown
+  // Xử lý click ngoài dropdown
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -332,15 +336,6 @@ export default function EVisaForm() {
     setSearchTerm('');
   };
 
-  const formatDate = (dateString: string) => {
-    // Kiểm tra nếu là định dạng YYYY-MM-DD (từ input type="date")
-    if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      const [year, month, day] = dateString.split('-');
-      return `${month}/${day}/${year}`;
-    }
-    return dateString; // Trả về nguyên vẹn nếu không phải định dạng trên
-  };
-
   const validateForm = () => {
     const newErrors: FormErrors = {};
 
@@ -353,18 +348,45 @@ export default function EVisaForm() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (validateForm()) {
-      // Here you would typically send the data to a server
-      alert(language === 'en' ? 'eVisa status check submitted!' : 'eVisa狀態檢查已提交！');
+      try {
+        // Gửi yêu cầu đến API endpoint của bạn để kiểm tra dữ liệu
+        const response = await fetch('/api/check-evisa', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            nationality: formData.nationality,
+            fullName: formData.fullName,
+            passportNumber: formData.passportNumber,
+            dateOfBirth: formData.dateOfBirth,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.imageUrl) {
+          setResultImage(data.imageUrl);
+          setResultError(null);
+        } else {
+          setResultError(language === 'en' ? 'No matching record found.' : '未找到匹配的記錄。');
+          setResultImage(null);
+        }
+      } catch (error) {
+        console.error('Error checking eVisa:', error);
+        setResultError(language === 'en' ? 'An error occurred. Please try again.' : '發生錯誤，請重試。');
+        setResultImage(null);
+      }
     }
   };
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header with dark blue background */}
+      {/* Header */}
       <header className="bg-[#1e3a8a] text-white py-12 text-center">
         <div className="container mx-auto px-4">
           <div className="flex justify-end mb-4">
@@ -527,6 +549,27 @@ export default function EVisaForm() {
                 </Button>
               </div>
             </form>
+
+            {/* Kết quả */}
+            {resultImage && (
+              <div className="mt-6">
+                <h2 className="text-lg font-bold">
+                  {language === 'en' ? 'Visa Image' : '簽證圖片'}
+                </h2>
+                <Image
+                  src={resultImage}
+                  alt="Visa Image"
+                  width={500}
+                  height={300}
+                  className="mt-2 rounded"
+                />
+              </div>
+            )}
+            {resultError && (
+              <div className="mt-6 text-red-500">
+                {resultError}
+              </div>
+            )}
           </div>
         </div>
       </main>
