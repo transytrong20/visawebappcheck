@@ -255,10 +255,17 @@ export default function EVisaForm() {
   const router = useRouter();
 
   // Refs
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Form state
-  const [formData, setFormData] = useState({
+  interface FormData {
+    nationality: string;
+    fullName: string;
+    passportNumber: string;
+    dateOfBirth: string;
+  }
+
+  const [formData, setFormData] = useState<FormData>({
     nationality: '',
     fullName: '',
     passportNumber: '',
@@ -271,7 +278,14 @@ export default function EVisaForm() {
   const [selectedCountry, setSelectedCountry] = useState('');
 
   // Error state
-  const [errors, setErrors] = useState({});
+  interface FormErrors {
+    nationality?: string;
+    fullName?: string;
+    passportNumber?: string;
+    dateOfBirth?: string;
+  }
+
+  const [errors, setErrors] = useState<FormErrors>({});
 
   // Lọc danh sách quốc gia dựa trên từ khóa tìm kiếm
   const filteredCountries = countries.filter(country =>
@@ -280,8 +294,8 @@ export default function EVisaForm() {
 
   // Xử lý khi click ra ngoài dropdown
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
       }
     }
@@ -300,7 +314,7 @@ export default function EVisaForm() {
     return null;
   }
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -308,7 +322,7 @@ export default function EVisaForm() {
     });
   };
 
-  const handleCountrySelect = (code, name) => {
+  const handleCountrySelect = (code: string, name: string) => {
     setFormData({
       ...formData,
       nationality: code
@@ -318,7 +332,7 @@ export default function EVisaForm() {
     setSearchTerm('');
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     // Kiểm tra nếu là định dạng YYYY-MM-DD (từ input type="date")
     if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
       const [year, month, day] = dateString.split('-');
@@ -328,23 +342,23 @@ export default function EVisaForm() {
   };
 
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors: FormErrors = {};
 
-    if (!formData.nationality.trim()) newErrors.nationality = 'Nationality is required';
-    if (!formData.fullName.trim()) newErrors.fullName = 'Full Name is required';
-    if (!formData.passportNumber.trim()) newErrors.passportNumber = 'Passport number is required';
-    if (!formData.dateOfBirth.trim()) newErrors.dateOfBirth = 'Date of birth is required';
+    if (!formData.nationality.trim()) newErrors.nationality = language === 'en' ? 'Nationality is required' : '國籍為必填項';
+    if (!formData.fullName.trim()) newErrors.fullName = language === 'en' ? 'Full Name is required' : '姓名為必填項';
+    if (!formData.passportNumber.trim()) newErrors.passportNumber = language === 'en' ? 'Passport number is required' : '護照號碼為必填項';
+    if (!formData.dateOfBirth.trim()) newErrors.dateOfBirth = language === 'en' ? 'Date of birth is required' : '出生日期為必填項';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (validateForm()) {
       // Here you would typically send the data to a server
-      alert('eVisa status check submitted!');
+      alert(language === 'en' ? 'eVisa status check submitted!' : 'eVisa狀態檢查已提交！');
     }
   };
 
@@ -353,9 +367,27 @@ export default function EVisaForm() {
       {/* Header with dark blue background */}
       <header className="bg-[#1e3a8a] text-white py-12 text-center">
         <div className="container mx-auto px-4">
-          <h1 className="text-3xl font-bold mb-2">Check eVisa Status</h1>
+          <div className="flex justify-end mb-4">
+            <button
+              onClick={() => setLanguage('en')}
+              className={`px-4 py-1 rounded-md mr-2 ${language === 'en' ? 'bg-white text-[#1e3a8a]' : 'bg-transparent text-white border border-white'}`}
+            >
+              English
+            </button>
+            <button
+              onClick={() => setLanguage('zh')}
+              className={`px-4 py-1 rounded-md ${language === 'zh' ? 'bg-white text-[#1e3a8a]' : 'bg-transparent text-white border border-white'}`}
+            >
+              中文
+            </button>
+          </div>
+          <h1 className="text-3xl font-bold mb-2">
+            {language === 'en' ? 'Check eVisa Status' : '查詢eVisa狀態'}
+          </h1>
           <p className="text-lg">
-            Please enter your information to check your eVisa status
+            {language === 'en' 
+              ? 'Please enter your information to check your eVisa status'
+              : '請輸入您的資料以查詢eVisa狀態'}
           </p>
         </div>
       </header>
@@ -382,7 +414,7 @@ export default function EVisaForm() {
               {/* Nationality - Searchable Dropdown */}
               <div className="bg-[#98eb95] p-4 rounded">
                 <label className="block text-sm font-medium mb-2">
-                  <span className="text-red-500">*</span> Nationality <span className="text-red-500">(Required)</span>
+                  <span className="text-red-500">*</span> {language === 'en' ? 'Nationality' : '國籍'} <span className="text-red-500">({language === 'en' ? 'Required' : '必填'})</span>
                 </label>
                 <div className="relative" ref={dropdownRef}>
                   <div
@@ -390,7 +422,7 @@ export default function EVisaForm() {
                     onClick={() => setShowDropdown(!showDropdown)}
                   >
                     <div className="overflow-hidden text-ellipsis whitespace-nowrap">
-                      {selectedCountry || '--Please Select--'}
+                      {selectedCountry || (language === 'en' ? '--Please Select--' : '--請選擇--')}
                     </div>
                     <div className="ml-2">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -404,7 +436,7 @@ export default function EVisaForm() {
                       <div className="sticky top-0 bg-white p-2 border-b">
                         <input
                           type="text"
-                          placeholder="Search countries..."
+                          placeholder={language === 'en' ? "Search countries..." : "搜尋國家..."}
                           className="w-full p-2 border border-gray-300 rounded"
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
@@ -413,7 +445,7 @@ export default function EVisaForm() {
                       </div>
                       <div>
                         {filteredCountries.length === 0 ? (
-                          <div className="p-2 text-gray-500">No results found</div>
+                          <div className="p-2 text-gray-500">{language === 'en' ? 'No results found' : '未找到結果'}</div>
                         ) : (
                           filteredCountries.map((country) => (
                             <div
@@ -435,7 +467,7 @@ export default function EVisaForm() {
               {/* Full Name */}
               <div className="bg-[#98eb95] p-4 rounded">
                 <label className="block text-sm font-medium mb-2">
-                  <span className="text-red-500">*</span> Full Name <span className="text-red-500">(Required)</span>
+                  <span className="text-red-500">*</span> {language === 'en' ? 'Full Name' : '姓名'} <span className="text-red-500">({language === 'en' ? 'Required' : '必填'})</span>
                 </label>
                 <input
                   type="text"
@@ -450,7 +482,7 @@ export default function EVisaForm() {
               {/* Passport Number */}
               <div className="bg-[#98eb95] p-4 rounded">
                 <label className="block text-sm font-medium mb-2">
-                  <span className="text-red-500">*</span> Passport No. <span className="text-red-500">(Required)</span>
+                  <span className="text-red-500">*</span> {language === 'en' ? 'Passport No.' : '護照號碼'} <span className="text-red-500">({language === 'en' ? 'Required' : '必填'})</span>
                 </label>
                 <input
                   type="text"
@@ -465,7 +497,7 @@ export default function EVisaForm() {
               {/* Date of Birth */}
               <div className="bg-[#98eb95] p-4 rounded">
                 <label className="block text-sm font-medium mb-2">
-                  <span className="text-red-500">*</span> Date of Birth <span className="text-red-500">(Required)</span>
+                  <span className="text-red-500">*</span> {language === 'en' ? 'Date of Birth' : '出生日期'} <span className="text-red-500">({language === 'en' ? 'Required' : '必填'})</span>
                 </label>
                 <div className="relative">
                   <input
@@ -491,7 +523,7 @@ export default function EVisaForm() {
                   type="submit"
                   className="bg-[#0d6efd] hover:bg-blue-700 text-white font-medium py-2 px-8 rounded"
                 >
-                  Check Visa Status
+                  {language === 'en' ? 'Check Visa Status' : '查詢簽證狀態'}
                 </Button>
               </div>
             </form>
