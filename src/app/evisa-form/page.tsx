@@ -1,40 +1,296 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { Checkbox } from '@/components/ui/checkbox';
+
+// Danh sách quốc gia đầy đủ
+const countries = [
+  { code: "AF", name: "Afghanistan" },
+  { code: "AL", name: "Albania" },
+  { code: "DZ", name: "Algeria" },
+  { code: "AS", name: "American Samoa" },
+  { code: "AD", name: "Andorra" },
+  { code: "AO", name: "Angola" },
+  { code: "AI", name: "Anguilla" },
+  { code: "AQ", name: "Antarctica" },
+  { code: "AG", name: "Antigua and Barbuda" },
+  { code: "AR", name: "Argentina" },
+  { code: "AM", name: "Armenia" },
+  { code: "AW", name: "Aruba" },
+  { code: "AU", name: "Australia" },
+  { code: "AT", name: "Austria" },
+  { code: "AZ", name: "Azerbaijan" },
+  { code: "BS", name: "Bahamas" },
+  { code: "BH", name: "Bahrain" },
+  { code: "BD", name: "Bangladesh" },
+  { code: "BB", name: "Barbados" },
+  { code: "BY", name: "Belarus" },
+  { code: "BE", name: "Belgium" },
+  { code: "BZ", name: "Belize" },
+  { code: "BJ", name: "Benin" },
+  { code: "BM", name: "Bermuda" },
+  { code: "BT", name: "Bhutan" },
+  { code: "BO", name: "Bolivia" },
+  { code: "BA", name: "Bosnia and Herzegovina" },
+  { code: "BW", name: "Botswana" },
+  { code: "BV", name: "Bouvet Island" },
+  { code: "BR", name: "Brazil" },
+  { code: "IO", name: "British Indian Ocean Territory" },
+  { code: "BN", name: "Brunei Darussalam" },
+  { code: "BG", name: "Bulgaria" },
+  { code: "BF", name: "Burkina Faso" },
+  { code: "BI", name: "Burundi" },
+  { code: "KH", name: "Cambodia" },
+  { code: "CM", name: "Cameroon" },
+  { code: "CA", name: "Canada" },
+  { code: "CV", name: "Cape Verde" },
+  { code: "KY", name: "Cayman Islands" },
+  { code: "CF", name: "Central African Republic" },
+  { code: "TD", name: "Chad" },
+  { code: "CL", name: "Chile" },
+  { code: "CN", name: "China" },
+  { code: "CX", name: "Christmas Island" },
+  { code: "CC", name: "Cocos (Keeling) Islands" },
+  { code: "CO", name: "Colombia" },
+  { code: "KM", name: "Comoros" },
+  { code: "CG", name: "Congo" },
+  { code: "CD", name: "Congo, the Democratic Republic of the" },
+  { code: "CK", name: "Cook Islands" },
+  { code: "CR", name: "Costa Rica" },
+  { code: "CI", name: "Cote D'Ivoire" },
+  { code: "HR", name: "Croatia" },
+  { code: "CU", name: "Cuba" },
+  { code: "CY", name: "Cyprus" },
+  { code: "CZ", name: "Czech Republic" },
+  { code: "DK", name: "Denmark" },
+  { code: "DJ", name: "Djibouti" },
+  { code: "DM", name: "Dominica" },
+  { code: "DO", name: "Dominican Republic" },
+  { code: "EC", name: "Ecuador" },
+  { code: "EG", name: "Egypt" },
+  { code: "SV", name: "El Salvador" },
+  { code: "GQ", name: "Equatorial Guinea" },
+  { code: "ER", name: "Eritrea" },
+  { code: "EE", name: "Estonia" },
+  { code: "ET", name: "Ethiopia" },
+  { code: "FK", name: "Falkland Islands (Malvinas)" },
+  { code: "FO", name: "Faroe Islands" },
+  { code: "FJ", name: "Fiji" },
+  { code: "FI", name: "Finland" },
+  { code: "FR", name: "France" },
+  { code: "GF", name: "French Guiana" },
+  { code: "PF", name: "French Polynesia" },
+  { code: "TF", name: "French Southern Territories" },
+  { code: "GA", name: "Gabon" },
+  { code: "GM", name: "Gambia" },
+  { code: "GE", name: "Georgia" },
+  { code: "DE", name: "Germany" },
+  { code: "GH", name: "Ghana" },
+  { code: "GI", name: "Gibraltar" },
+  { code: "GR", name: "Greece" },
+  { code: "GL", name: "Greenland" },
+  { code: "GD", name: "Grenada" },
+  { code: "GP", name: "Guadeloupe" },
+  { code: "GU", name: "Guam" },
+  { code: "GT", name: "Guatemala" },
+  { code: "GN", name: "Guinea" },
+  { code: "GW", name: "Guinea-Bissau" },
+  { code: "GY", name: "Guyana" },
+  { code: "HT", name: "Haiti" },
+  { code: "HM", name: "Heard Island and Mcdonald Islands" },
+  { code: "VA", name: "Holy See (Vatican City State)" },
+  { code: "HN", name: "Honduras" },
+  { code: "HK", name: "Hong Kong" },
+  { code: "HU", name: "Hungary" },
+  { code: "IS", name: "Iceland" },
+  { code: "IN", name: "India" },
+  { code: "ID", name: "Indonesia" },
+  { code: "IR", name: "Iran, Islamic Republic of" },
+  { code: "IQ", name: "Iraq" },
+  { code: "IE", name: "Ireland" },
+  { code: "IL", name: "Israel" },
+  { code: "IT", name: "Italy" },
+  { code: "JM", name: "Jamaica" },
+  { code: "JP", name: "Japan" },
+  { code: "JO", name: "Jordan" },
+  { code: "KZ", name: "Kazakhstan" },
+  { code: "KE", name: "Kenya" },
+  { code: "KI", name: "Kiribati" },
+  { code: "KP", name: "Korea, Democratic People's Republic of" },
+  { code: "KR", name: "Korea, Republic of" },
+  { code: "KW", name: "Kuwait" },
+  { code: "KG", name: "Kyrgyzstan" },
+  { code: "LA", name: "Lao People's Democratic Republic" },
+  { code: "LV", name: "Latvia" },
+  { code: "LB", name: "Lebanon" },
+  { code: "LS", name: "Lesotho" },
+  { code: "LR", name: "Liberia" },
+  { code: "LY", name: "Libyan Arab Jamahiriya" },
+  { code: "LI", name: "Liechtenstein" },
+  { code: "LT", name: "Lithuania" },
+  { code: "LU", name: "Luxembourg" },
+  { code: "MO", name: "Macao" },
+  { code: "MK", name: "Macedonia, the Former Yugoslav Republic of" },
+  { code: "MG", name: "Madagascar" },
+  { code: "MW", name: "Malawi" },
+  { code: "MY", name: "Malaysia" },
+  { code: "MV", name: "Maldives" },
+  { code: "ML", name: "Mali" },
+  { code: "MT", name: "Malta" },
+  { code: "MH", name: "Marshall Islands" },
+  { code: "MQ", name: "Martinique" },
+  { code: "MR", name: "Mauritania" },
+  { code: "MU", name: "Mauritius" },
+  { code: "YT", name: "Mayotte" },
+  { code: "MX", name: "Mexico" },
+  { code: "FM", name: "Micronesia, Federated States of" },
+  { code: "MD", name: "Moldova, Republic of" },
+  { code: "MC", name: "Monaco" },
+  { code: "MN", name: "Mongolia" },
+  { code: "MS", name: "Montserrat" },
+  { code: "MA", name: "Morocco" },
+  { code: "MZ", name: "Mozambique" },
+  { code: "MM", name: "Myanmar" },
+  { code: "NA", name: "Namibia" },
+  { code: "NR", name: "Nauru" },
+  { code: "NP", name: "Nepal" },
+  { code: "NL", name: "Netherlands" },
+  { code: "AN", name: "Netherlands Antilles" },
+  { code: "NC", name: "New Caledonia" },
+  { code: "NZ", name: "New Zealand" },
+  { code: "NI", name: "Nicaragua" },
+  { code: "NE", name: "Niger" },
+  { code: "NG", name: "Nigeria" },
+  { code: "NU", name: "Niue" },
+  { code: "NF", name: "Norfolk Island" },
+  { code: "MP", name: "Northern Mariana Islands" },
+  { code: "NO", name: "Norway" },
+  { code: "OM", name: "Oman" },
+  { code: "PK", name: "Pakistan" },
+  { code: "PW", name: "Palau" },
+  { code: "PS", name: "Palestinian Territory, Occupied" },
+  { code: "PA", name: "Panama" },
+  { code: "PG", name: "Papua New Guinea" },
+  { code: "PY", name: "Paraguay" },
+  { code: "PE", name: "Peru" },
+  { code: "PH", name: "Philippines" },
+  { code: "PN", name: "Pitcairn" },
+  { code: "PL", name: "Poland" },
+  { code: "PT", name: "Portugal" },
+  { code: "PR", name: "Puerto Rico" },
+  { code: "QA", name: "Qatar" },
+  { code: "RE", name: "Reunion" },
+  { code: "RO", name: "Romania" },
+  { code: "RU", name: "Russian Federation" },
+  { code: "RW", name: "Rwanda" },
+  { code: "SH", name: "Saint Helena" },
+  { code: "KN", name: "Saint Kitts and Nevis" },
+  { code: "LC", name: "Saint Lucia" },
+  { code: "PM", name: "Saint Pierre and Miquelon" },
+  { code: "VC", name: "Saint Vincent and the Grenadines" },
+  { code: "WS", name: "Samoa" },
+  { code: "SM", name: "San Marino" },
+  { code: "ST", name: "Sao Tome and Principe" },
+  { code: "SA", name: "Saudi Arabia" },
+  { code: "SN", name: "Senegal" },
+  { code: "CS", name: "Serbia and Montenegro" },
+  { code: "SC", name: "Seychelles" },
+  { code: "SL", name: "Sierra Leone" },
+  { code: "SG", name: "Singapore" },
+  { code: "SK", name: "Slovakia" },
+  { code: "SI", name: "Slovenia" },
+  { code: "SB", name: "Solomon Islands" },
+  { code: "SO", name: "Somalia" },
+  { code: "ZA", name: "South Africa" },
+  { code: "GS", name: "South Georgia and the South Sandwich Islands" },
+  { code: "ES", name: "Spain" },
+  { code: "LK", name: "Sri Lanka" },
+  { code: "SD", name: "Sudan" },
+  { code: "SR", name: "Suriname" },
+  { code: "SJ", name: "Svalbard and Jan Mayen" },
+  { code: "SZ", name: "Swaziland" },
+  { code: "SE", name: "Sweden" },
+  { code: "CH", name: "Switzerland" },
+  { code: "SY", name: "Syrian Arab Republic" },
+  { code: "TW", name: "Taiwan" },
+  { code: "TJ", name: "Tajikistan" },
+  { code: "TZ", name: "Tanzania, United Republic of" },
+  { code: "TH", name: "Thailand" },
+  { code: "TL", name: "Timor-Leste" },
+  { code: "TG", name: "Togo" },
+  { code: "TK", name: "Tokelau" },
+  { code: "TO", name: "Tonga" },
+  { code: "TT", name: "Trinidad and Tobago" },
+  { code: "TN", name: "Tunisia" },
+  { code: "TR", name: "Turkey" },
+  { code: "TM", name: "Turkmenistan" },
+  { code: "TC", name: "Turks and Caicos Islands" },
+  { code: "TV", name: "Tuvalu" },
+  { code: "UG", name: "Uganda" },
+  { code: "UA", name: "Ukraine" },
+  { code: "AE", name: "United Arab Emirates" },
+  { code: "GB", name: "United Kingdom" },
+  { code: "US", name: "United States" },
+  { code: "UM", name: "United States Minor Outlying Islands" },
+  { code: "UY", name: "Uruguay" },
+  { code: "UZ", name: "Uzbekistan" },
+  { code: "VU", name: "Vanuatu" },
+  { code: "VE", name: "Venezuela" },
+  { code: "VN", name: "Vietnam" },
+  { code: "VG", name: "Virgin Islands, British" },
+  { code: "VI", name: "Virgin Islands, U.S." },
+  { code: "WF", name: "Wallis and Futuna" },
+  { code: "EH", name: "Western Sahara" },
+  { code: "YE", name: "Yemen" },
+  { code: "ZM", name: "Zambia" },
+  { code: "ZW", name: "Zimbabwe" }
+];
 
 export default function EVisaForm() {
-  const { language, setLanguage, t } = useLanguage();
+  const { language, setLanguage } = useLanguage();
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
+  // Refs
+  const dropdownRef = useRef(null);
+
   // Form state
   const [formData, setFormData] = useState({
-    surname: '',
-    givenName: '',
-    passportNumber: '',
     nationality: '',
+    fullName: '',
+    passportNumber: '',
     dateOfBirth: '',
-    gender: 'male',
-    email: '',
-    phone: '',
-    address: '',
-    purposeOfVisit: 'tourism',
-    durationOfStay: '30',
-    plannedArrivalDate: '',
-    plannedDepartureDate: '',
-    agreeToTerms: false
   });
+
+  // State cho searchable dropdown
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState('');
 
   // Error state
   const [errors, setErrors] = useState({});
 
-  // Generate application number
-  const applicationNumber = "TW" + Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+  // Lọc danh sách quốc gia dựa trên từ khóa tìm kiếm
+  const filteredCountries = countries.filter(country =>
+    country.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Xử lý khi click ra ngoài dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownRef]);
 
   useEffect(() => {
     setMounted(true);
@@ -52,27 +308,32 @@ export default function EVisaForm() {
     });
   };
 
-  const handleCheckboxChange = (checked) => {
+  const handleCountrySelect = (code, name) => {
     setFormData({
       ...formData,
-      agreeToTerms: checked
+      nationality: code
     });
+    setSelectedCountry(name);
+    setShowDropdown(false);
+    setSearchTerm('');
+  };
+
+  const formatDate = (dateString) => {
+    // Kiểm tra nếu là định dạng YYYY-MM-DD (từ input type="date")
+    if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const [year, month, day] = dateString.split('-');
+      return `${month}/${day}/${year}`;
+    }
+    return dateString; // Trả về nguyên vẹn nếu không phải định dạng trên
   };
 
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.surname.trim()) newErrors.surname = 'Surname is required';
-    if (!formData.givenName.trim()) newErrors.givenName = 'Given name is required';
-    if (!formData.passportNumber.trim()) newErrors.passportNumber = 'Passport number is required';
     if (!formData.nationality.trim()) newErrors.nationality = 'Nationality is required';
+    if (!formData.fullName.trim()) newErrors.fullName = 'Full Name is required';
+    if (!formData.passportNumber.trim()) newErrors.passportNumber = 'Passport number is required';
     if (!formData.dateOfBirth.trim()) newErrors.dateOfBirth = 'Date of birth is required';
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
-    if (!formData.address.trim()) newErrors.address = 'Address is required';
-    if (!formData.plannedArrivalDate.trim()) newErrors.plannedArrivalDate = 'Planned arrival date is required';
-    if (!formData.plannedDepartureDate.trim()) newErrors.plannedDepartureDate = 'Planned departure date is required';
-    if (!formData.agreeToTerms) newErrors.agreeToTerms = 'You must agree to the terms';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -83,357 +344,160 @@ export default function EVisaForm() {
 
     if (validateForm()) {
       // Here you would typically send the data to a server
-      alert('Application submitted successfully!');
-      // Navigate back to the home page or to a confirmation page
-      router.push('/');
+      alert('eVisa status check submitted!');
     }
   };
 
-  const handleBack = () => {
-    router.push('/evisa-info-new');
-  };
-
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      {/* Header */}
-      <header className="bg-[#f59a36] text-white py-4">
+    <div className="min-h-screen flex flex-col">
+      {/* Header with dark blue background */}
+      <header className="bg-[#1e3a8a] text-white py-12 text-center">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center">
-            <h4 className="text-xl font-medium">{language === 'en' ? 'Online Visa Application Form' : '線上簽證申請表'}</h4>
-            <div className="flex items-center">
-              <span className="mr-3">{language === 'en' ? 'Application No.:' : '申請編號：'} {applicationNumber}</span>
-              <div className="relative">
-                <select
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value as 'en' | 'zh')}
-                  className="appearance-none bg-white text-[#2e4953] px-3 py-1 rounded-md pr-8"
-                >
-                  <option value="en">English</option>
-                  <option value="zh">中文</option>
-                </select>
-                <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M2.5 4.5L6 8L9.5 4.5" stroke="#2e4953" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
+          <h1 className="text-3xl font-bold mb-2">Check eVisa Status</h1>
+          <p className="text-lg">
+            Please enter your information to check your eVisa status
+          </p>
         </div>
       </header>
 
       {/* Logo */}
-      <div className="border-b border-gray-300 py-4">
+      <div className="bg-white py-6">
         <div className="container mx-auto px-4 flex justify-center">
-          <div className="max-w-[600px] w-full">
-            <Image
-              src="/logo.jpg"
-              alt="Bureau of Consular Affairs logo"
-              width={600}
-              height={100}
-              className="h-auto w-full"
-              priority
-              crossOrigin="anonymous"
-            />
-          </div>
+          <Image
+            src="/logo-new.jpg"
+            alt="Bureau of Consular Affairs logo"
+            width={500}
+            height={100}
+            className="h-auto"
+            priority
+          />
         </div>
       </div>
 
       {/* Main Content */}
-      <main className="flex-grow container mx-auto px-4 py-8 max-w-4xl">
-        <h2 className="text-2xl font-bold mb-4 text-[#2e4953]">
-          {language === 'en' ? 'eVisa Application Form' : '電子簽證申請表單'}
-        </h2>
+      <main className="flex-grow py-8 bg-gray-100">
+        <div className="container mx-auto px-4 max-w-xl">
+          <div className="bg-white rounded-lg shadow-md p-6 pb-8">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Nationality - Searchable Dropdown */}
+              <div className="bg-[#98eb95] p-4 rounded">
+                <label className="block text-sm font-medium mb-2">
+                  <span className="text-red-500">*</span> Nationality <span className="text-red-500">(Required)</span>
+                </label>
+                <div className="relative" ref={dropdownRef}>
+                  <div
+                    className="w-full p-2 border border-gray-300 rounded bg-white flex justify-between items-center cursor-pointer"
+                    onClick={() => setShowDropdown(!showDropdown)}
+                  >
+                    <div className="overflow-hidden text-ellipsis whitespace-nowrap">
+                      {selectedCountry || '--Please Select--'}
+                    </div>
+                    <div className="ml-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
 
-        <div className="bg-[#e7f3eb] p-4 rounded-md mb-6 border-l-4 border-[#2e4953]">
-          <div className="mb-3">
-            <p className="text-[#2e4953] font-medium">
-              {language === 'en'
-                ? 'Important Information'
-                : '重要資訊'}
-            </p>
-          </div>
-          <p className="text-sm text-gray-700 mb-3">
-            {language === 'en'
-              ? 'This application is for an electronic visa (eVisa) to Taiwan. Please ensure all information provided is accurate and matches your passport details.'
-              : '此申請表用於申請台灣電子簽證（eVisa）。請確保所提供的所有資訊準確無誤並與您的護照詳細資料一致。'}
-          </p>
-          <p className="text-sm text-[#aa565b] font-medium">
-            {language === 'en'
-              ? 'Please notice that the information you fill in online, including Surname, Given Name, Date of Birth, Passport No., Nationality and Sex, must completely match the information on your travel document; otherwise, your eVisa will be invalid.'
-              : '請注意，您在線上填寫的資料，包括姓氏、名字、出生日期、護照號碼、國籍和性別，必須與您的旅行證件完全相符；否則，您的電子簽證將無效。'}
-          </p>
-        </div>
+                  {showDropdown && (
+                    <div className="absolute w-full mt-1 max-h-60 overflow-y-auto bg-white border border-gray-300 rounded shadow-lg z-10">
+                      <div className="sticky top-0 bg-white p-2 border-b">
+                        <input
+                          type="text"
+                          placeholder="Search countries..."
+                          className="w-full p-2 border border-gray-300 rounded"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                      <div>
+                        {filteredCountries.length === 0 ? (
+                          <div className="p-2 text-gray-500">No results found</div>
+                        ) : (
+                          filteredCountries.map((country) => (
+                            <div
+                              key={country.code}
+                              className="p-2 hover:bg-gray-100 cursor-pointer"
+                              onClick={() => handleCountrySelect(country.code, country.name)}
+                            >
+                              {country.name}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {errors.nationality && <p className="text-red-500 text-xs mt-1">{errors.nationality}</p>}
+              </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8 bg-white p-6 border border-gray-200 rounded-md shadow-sm">
-          {/* Personal Information Section */}
-          <div>
-            <h2 className="text-xl font-semibold mb-4 text-[#2e4953] border-b pb-2">
-              {language === 'en' ? '1. Personal Information' : '1. 個人資料'}
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {language === 'en' ? 'Surname / Family Name' : '姓氏'}*
+              {/* Full Name */}
+              <div className="bg-[#98eb95] p-4 rounded">
+                <label className="block text-sm font-medium mb-2">
+                  <span className="text-red-500">*</span> Full Name <span className="text-red-500">(Required)</span>
                 </label>
                 <input
                   type="text"
-                  name="surname"
-                  value={formData.surname}
+                  name="fullName"
+                  value={formData.fullName}
                   onChange={handleInputChange}
-                  className={`w-full p-2 border rounded-md ${errors.surname ? 'border-[#aa565b]' : 'border-gray-300'}`}
-                  placeholder={language === 'en' ? 'As shown in passport' : '護照上顯示的姓氏'}
+                  className="w-full p-2 border border-gray-300 rounded"
                 />
-                {errors.surname && <p className="text-[#aa565b] text-xs mt-1">{errors.surname}</p>}
+                {errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {language === 'en' ? 'Given Name(s)' : '名字'}*
-                </label>
-                <input
-                  type="text"
-                  name="givenName"
-                  value={formData.givenName}
-                  onChange={handleInputChange}
-                  className={`w-full p-2 border rounded-md ${errors.givenName ? 'border-[#aa565b]' : 'border-gray-300'}`}
-                  placeholder={language === 'en' ? 'As shown in passport' : '護照上顯示的名字'}
-                />
-                {errors.givenName && <p className="text-[#aa565b] text-xs mt-1">{errors.givenName}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {language === 'en' ? 'Passport Number' : '護照號碼'}*
+              {/* Passport Number */}
+              <div className="bg-[#98eb95] p-4 rounded">
+                <label className="block text-sm font-medium mb-2">
+                  <span className="text-red-500">*</span> Passport No. <span className="text-red-500">(Required)</span>
                 </label>
                 <input
                   type="text"
                   name="passportNumber"
                   value={formData.passportNumber}
                   onChange={handleInputChange}
-                  className={`w-full p-2 border rounded-md ${errors.passportNumber ? 'border-[#aa565b]' : 'border-gray-300'}`}
+                  className="w-full p-2 border border-gray-300 rounded"
                 />
-                {errors.passportNumber && <p className="text-[#aa565b] text-xs mt-1">{errors.passportNumber}</p>}
+                {errors.passportNumber && <p className="text-red-500 text-xs mt-1">{errors.passportNumber}</p>}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {language === 'en' ? 'Nationality' : '國籍'}*
+              {/* Date of Birth */}
+              <div className="bg-[#98eb95] p-4 rounded">
+                <label className="block text-sm font-medium mb-2">
+                  <span className="text-red-500">*</span> Date of Birth <span className="text-red-500">(Required)</span>
                 </label>
-                <input
-                  type="text"
-                  name="nationality"
-                  value={formData.nationality}
-                  onChange={handleInputChange}
-                  className={`w-full p-2 border rounded-md ${errors.nationality ? 'border-[#aa565b]' : 'border-gray-300'}`}
-                />
-                {errors.nationality && <p className="text-[#aa565b] text-xs mt-1">{errors.nationality}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {language === 'en' ? 'Date of Birth' : '出生日期'}*
-                </label>
-                <input
-                  type="date"
-                  name="dateOfBirth"
-                  value={formData.dateOfBirth}
-                  onChange={handleInputChange}
-                  className={`w-full p-2 border rounded-md ${errors.dateOfBirth ? 'border-[#aa565b]' : 'border-gray-300'}`}
-                />
-                {errors.dateOfBirth && <p className="text-[#aa565b] text-xs mt-1">{errors.dateOfBirth}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {language === 'en' ? 'Gender' : '性別'}*
-                </label>
-                <select
-                  name="gender"
-                  value={formData.gender}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                >
-                  <option value="male">{language === 'en' ? 'Male' : '男'}</option>
-                  <option value="female">{language === 'en' ? 'Female' : '女'}</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Contact Information Section */}
-          <div>
-            <h2 className="text-xl font-semibold mb-4 text-[#2e4953] border-b pb-2">
-              {language === 'en' ? '2. Contact Information' : '2. 聯絡資料'}
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {language === 'en' ? 'Email Address' : '電子郵件'}*
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className={`w-full p-2 border rounded-md ${errors.email ? 'border-[#aa565b]' : 'border-gray-300'}`}
-                  placeholder="example@email.com"
-                />
-                {errors.email && <p className="text-[#aa565b] text-xs mt-1">{errors.email}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {language === 'en' ? 'Phone Number' : '電話號碼'}*
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className={`w-full p-2 border rounded-md ${errors.phone ? 'border-[#aa565b]' : 'border-gray-300'}`}
-                  placeholder={language === 'en' ? 'Include country code' : '包括國家代碼'}
-                />
-                {errors.phone && <p className="text-[#aa565b] text-xs mt-1">{errors.phone}</p>}
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {language === 'en' ? 'Current Residential Address' : '目前住址'}*
-                </label>
-                <textarea
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  rows={3}
-                  className={`w-full p-2 border rounded-md ${errors.address ? 'border-[#aa565b]' : 'border-gray-300'}`}
-                  placeholder={language === 'en' ? 'Full address including postal/zip code' : '完整地址包括郵政編碼'}
-                ></textarea>
-                {errors.address && <p className="text-[#aa565b] text-xs mt-1">{errors.address}</p>}
-              </div>
-            </div>
-          </div>
-
-          {/* Travel Information Section */}
-          <div>
-            <h2 className="text-xl font-semibold mb-4 text-[#2e4953] border-b pb-2">
-              {language === 'en' ? '3. Travel Information' : '3. 旅行資料'}
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {language === 'en' ? 'Purpose of Visit' : '訪問目的'}*
-                </label>
-                <select
-                  name="purposeOfVisit"
-                  value={formData.purposeOfVisit}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                >
-                  <option value="tourism">{language === 'en' ? 'Tourism' : '觀光'}</option>
-                  <option value="business">{language === 'en' ? 'Business' : '商務'}</option>
-                  <option value="visiting_relatives">{language === 'en' ? 'Visiting Relatives' : '探親'}</option>
-                  <option value="conference">{language === 'en' ? 'Conference' : '會議'}</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {language === 'en' ? 'Duration of Stay (days)' : '停留期限（天）'}*
-                </label>
-                <select
-                  name="durationOfStay"
-                  value={formData.durationOfStay}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                >
-                  <option value="7">7</option>
-                  <option value="14">14</option>
-                  <option value="21">21</option>
-                  <option value="30">30</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {language === 'en' ? 'Planned Arrival Date' : '計劃入境日期'}*
-                </label>
-                <input
-                  type="date"
-                  name="plannedArrivalDate"
-                  value={formData.plannedArrivalDate}
-                  onChange={handleInputChange}
-                  className={`w-full p-2 border rounded-md ${errors.plannedArrivalDate ? 'border-[#aa565b]' : 'border-gray-300'}`}
-                />
-                {errors.plannedArrivalDate && <p className="text-[#aa565b] text-xs mt-1">{errors.plannedArrivalDate}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {language === 'en' ? 'Planned Departure Date' : '計劃離境日期'}*
-                </label>
-                <input
-                  type="date"
-                  name="plannedDepartureDate"
-                  value={formData.plannedDepartureDate}
-                  onChange={handleInputChange}
-                  className={`w-full p-2 border rounded-md ${errors.plannedDepartureDate ? 'border-[#aa565b]' : 'border-gray-300'}`}
-                />
-                {errors.plannedDepartureDate && <p className="text-[#aa565b] text-xs mt-1">{errors.plannedDepartureDate}</p>}
-              </div>
-            </div>
-          </div>
-
-          {/* Terms and Conditions */}
-          <div className="pt-4">
-            <div className="bg-[#e7f3eb] p-4 rounded-md">
-              <div className="flex items-start">
-                <div className="flex h-5 items-center mt-1">
-                  <Checkbox
-                    id="agreeToTerms"
-                    checked={formData.agreeToTerms}
-                    onCheckedChange={handleCheckboxChange}
-                    className={errors.agreeToTerms ? 'border-[#aa565b]' : ''}
+                <div className="relative">
+                  <input
+                    type="date"
+                    name="dateOfBirth"
+                    value={formData.dateOfBirth}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded"
                   />
+                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
                 </div>
-                <div className="ml-3 text-sm">
-                  <label htmlFor="agreeToTerms" className="font-medium text-gray-700">
-                    {language === 'en'
-                      ? 'I declare that the information provided above is true and correct. I understand that any false or misleading statements may result in the denial of my visa application.'
-                      : '我聲明上述提供的信息真實無誤。我明白任何虛假或誤導性陳述可能導致我的簽證申請被拒絕。'}
-                  </label>
-                  {errors.agreeToTerms && <p className="text-[#aa565b] text-xs mt-1">{errors.agreeToTerms}</p>}
-                </div>
+                <p className="text-xs text-gray-600 mt-1">(MM/DD/YYYY)</p>
+                {errors.dateOfBirth && <p className="text-red-500 text-xs mt-1">{errors.dateOfBirth}</p>}
               </div>
-            </div>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-center gap-4 pt-4">
-            <Button
-              type="button"
-              onClick={handleBack}
-              className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2"
-            >
-              {language === 'en' ? 'Cancel & Exit' : '取消並退出'}
-            </Button>
-            <Button
-              type="submit"
-              className="bg-[#2e4953] hover:bg-[#1d3741] text-white px-8 py-2"
-            >
-              {language === 'en' ? 'Confirm & Continue' : '確認並繼續'}
-            </Button>
+              {/* Submit Button */}
+              <div className="pt-4 flex justify-center">
+                <Button
+                  type="submit"
+                  className="bg-[#0d6efd] hover:bg-blue-700 text-white font-medium py-2 px-8 rounded"
+                >
+                  Check Visa Status
+                </Button>
+              </div>
+            </form>
           </div>
-        </form>
+        </div>
       </main>
-
-      {/* Footer */}
-      <footer className="bg-white py-4 text-center text-gray-600 border-t mt-8">
-        <p>© 2024 {language === 'en' ? 'Visa Application System. All rights reserved.' : '簽證申請系統。版權所有。'}</p>
-      </footer>
     </div>
   );
 }
