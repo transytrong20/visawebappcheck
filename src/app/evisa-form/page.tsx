@@ -63,6 +63,9 @@ export default function EVisaForm() {
   const [resultImages, setResultImages] = useState<string[]>([]);
   const [resultError, setResultError] = useState<string | null>(null);
 
+  // State for selected image
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
   // Lọc danh sách quốc gia
   const filteredCountries = COUNTRIES.filter(country =>
     country.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -165,6 +168,14 @@ export default function EVisaForm() {
         setResultImages([]);
       }
     }
+  };
+
+  const handleImageClick = (imageUrl: string) => {
+    setSelectedImage(imageUrl);
+  };
+
+  const closeModal = () => {
+    setSelectedImage(null);
   };
 
   return (
@@ -355,19 +366,13 @@ export default function EVisaForm() {
                         <img
                           src={imageUrl}
                           alt={`Visa Image ${index + 1}`}
-                          className="w-full h-auto max-h-[500px] object-contain mx-auto"
-                          style={{
-                            display: 'block',
-                            backgroundColor: '#f8f9fa'
-                          }}
+                          className="w-full h-auto max-h-[500px] object-contain mx-auto cursor-pointer"
+                          onClick={() => handleImageClick(imageUrl)}
                           onError={(e) => {
                             console.error(`Error loading image ${index}:`, imageUrl);
                             const imgElement = e.target as HTMLImageElement;
                             imgElement.style.display = 'none';
                             imgElement.parentElement?.classList.add('hidden');
-                          }}
-                          onLoad={() => {
-                            console.log(`Image ${index} loaded successfully:`, imageUrl);
                           }}
                         />
                       </div>
@@ -391,6 +396,21 @@ export default function EVisaForm() {
           </div>
         </div>
       </main>
+
+      {/* Selected Image Modal */}
+      {selectedImage && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50" onClick={closeModal}>
+          <img
+            src={selectedImage}
+            alt="Selected Visa"
+            className="max-w-full max-h-full"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button className="absolute top-4 right-4 text-white text-2xl" onClick={closeModal}>
+            &times;
+          </button>
+        </div>
+      )}
     </div>
   );
 }
