@@ -392,7 +392,8 @@ const worker = {
             image_urls: record.image_urls 
               ? record.image_urls.split(',').map((url: string) => {
                   const cleanUrl = url.trim();
-                  return generatePublicUrl(env, cleanUrl, request.url);
+                  // return generatePublicUrl(env, cleanUrl, request.url);
+                  return `${env.R2_PUBLIC_URL_IMAGE}/${cleanUrl}`;
                 })
               : []
           }));
