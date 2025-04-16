@@ -3,17 +3,17 @@ const nextConfig = {
   output: 'standalone',
   images: {
     unoptimized: true,
-    domains: ['visa-webapp.transytrong20.workers.dev', 'pub-d007d74036654473a8d7d9d0a663708b.r2.dev'],
+    domains: ['visa-webapp.milenafonseca998.workers.dev', 'pub-9482cacc79b74257911fbde91923bc6a.r2.dev'],
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'visa-webapp.transytrong20.workers.dev',
+        hostname: 'visa-webapp.milenafonseca998.workers.dev',
         port: '',
         pathname: '/images/**',
       },
       {
         protocol: 'https',
-        hostname: 'pub-d007d74036654473a8d7d9d0a663708b.r2.dev',
+        hostname: 'pub-9482cacc79b74257911fbde91923bc6a.r2.dev',
         port: '',
         pathname: '/**',
       },

@@ -8,6 +8,7 @@ export interface Env {
   __STATIC_CONTENT_MANIFEST: string;
   CLOUDFLARE_ACCOUNT_ID: string;
   R2_PUBLIC_URL: string;
+  R2_PUBLIC_URL_IMAGE: string;
   BUCKET_NAME: string;
 }
 
@@ -18,6 +19,7 @@ interface VisaHolderResponse {
   full_name: string;
   passport_number: string;
   date_of_birth: string;
+  status_name: string;
   image_urls: string[];
 }
 
@@ -117,6 +119,7 @@ const worker = {
                 vh.full_name,
                 vh.passport_number,
                 vh.date_of_birth,
+                vh.status_name,
                 GROUP_CONCAT(vi.image_url) as image_urls
               FROM visa_holders vh
               LEFT JOIN visa_images vi ON vh.id = vi.visa_holder_id
@@ -168,6 +171,7 @@ const worker = {
                 full_name: result.full_name as string,
                 passport_number: result.passport_number as string,
                 date_of_birth: result.date_of_birth as string,
+                status_name: result.status_name as string,
                 image_urls: publicUrls,
               },
             };
@@ -207,6 +211,7 @@ const worker = {
             const fullName = formData.get("fullName") as string;
             const passportNumber = formData.get("passportNumber") as string;
             const dateOfBirth = formData.get("dateOfBirth") as string;
+            const statusName = formData.get("statusName") as string || "Pending";
             const visaImages = formData.getAll("visaImages") as File[];
 
             // Log received data for debugging
@@ -215,6 +220,7 @@ const worker = {
               fullName,
               passportNumber,
               dateOfBirth,
+              statusName,
               imageCount: visaImages.length
             });
 
@@ -246,10 +252,10 @@ const worker = {
             try {
               // Insert visa holder first
               const insertResult = await env.DB.prepare(
-                `INSERT INTO visa_holders (nationality, full_name, passport_number, date_of_birth) 
-                 VALUES (?, ?, ?, ?)`
+                `INSERT INTO visa_holders (nationality, full_name, passport_number, date_of_birth, status_name) 
+                 VALUES (?, ?, ?, ?, ?)`
               )
-                .bind(nationality, fullName, passportNumber, dateOfBirth)
+                .bind(nationality, fullName, passportNumber, dateOfBirth, statusName)
                 .run();
 
               if (!insertResult.success) {
@@ -357,6 +363,7 @@ const worker = {
             full_name: string;
             passport_number: string;
             date_of_birth: string;
+            status_name: string;
             image_urls: string | null;
           }
 
@@ -367,6 +374,7 @@ const worker = {
               vh.full_name,
               vh.passport_number,
               vh.date_of_birth,
+              vh.status_name,
               GROUP_CONCAT(vi.image_url) as image_urls
             FROM visa_holders vh
             LEFT JOIN visa_images vi ON vh.id = vi.visa_holder_id
@@ -380,10 +388,11 @@ const worker = {
             full_name: record.full_name,
             passport_number: record.passport_number,
             date_of_birth: record.date_of_birth,
+            status_name: record.status_name,
             image_urls: record.image_urls 
               ? record.image_urls.split(',').map((url: string) => {
                   const cleanUrl = url.trim();
-                  return `https://pub-d007d74036654473a8d7d9d0a663708b.r2.dev/${cleanUrl}`;
+                  return generatePublicUrl(env, cleanUrl, request.url);
                 })
               : []
           }));
@@ -440,8 +449,18 @@ const worker = {
 }
 
 async function generatePublicUrl(env: Env, imageKey: string, requestUrl: string): Promise<string> {
-  // Return direct R2 bucket URL
-  return `https://pub-d007d74036654473a8d7d9d0a663708b.r2.dev/${imageKey}`;
+  // Use the environment variable R2_PUBLIC_URL_IMAGE if available
+  if (env.R2_PUBLIC_URL_IMAGE) {
+    return `${env.R2_PUBLIC_URL_IMAGE}/${imageKey}`;
+  }
+  
+  // Fallback to constructing the URL from the request URL
+  if (requestUrl.includes('localhost')) {
+    return `http://localhost:8787/images/${imageKey}`;
+  }
+  
+  // Default to the R2 public URL
+  return `https://pub-9482cacc79b74257911fbde91923bc6a.r2.dev/${imageKey}`;
 }
 
 export default worker 

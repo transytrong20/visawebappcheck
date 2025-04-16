@@ -4,12 +4,19 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { COUNTRIES } from '@/constants/countries';
 
+// Hàm chuyển đổi mã quốc gia sang tên
+const getCountryName = (code: string): string => {
+  const country = COUNTRIES.find(c => c.code === code);
+  return country ? country.name : code;
+};
+
 interface VisaRecord {
   id: number;
   nationality: string;
   full_name: string;
   passport_number: string;
   date_of_birth: string;
+  status_name: string;
   image_urls: string[];
 }
 
@@ -42,6 +49,7 @@ export default function AdminPage() {
     full_name: '',
     passport_number: '',
     date_of_birth: '',
+    status_name: 'Pending',
   });
   const [selectedImages, setSelectedImages] = useState<ImageFile[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -117,6 +125,7 @@ export default function AdminPage() {
       form.append('fullName', formData.full_name);
       form.append('passportNumber', formData.passport_number);
       form.append('dateOfBirth', formData.date_of_birth);
+      form.append('statusName', formData.status_name);
 
       selectedImages.forEach(({file}) => {
         form.append('visaImages', file);
@@ -139,6 +148,7 @@ export default function AdminPage() {
         full_name: '',
         passport_number: '',
         date_of_birth: '',
+        status_name: 'Pending',
       });
       setSelectedImages([]);
       setShowForm(false);
@@ -239,7 +249,7 @@ export default function AdminPage() {
                       >
                         <option value="">Select a country</option>
                         {COUNTRIES.map(country => (
-                          <option key={country.code} value={country.name}>
+                          <option key={country.code} value={country.code}>
                             {country.name}
                           </option>
                         ))}
@@ -274,6 +284,19 @@ export default function AdminPage() {
                         onChange={(e) => setFormData({...formData, date_of_birth: e.target.value})}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                       />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Visa Status</label>
+                      <select
+                        required
+                        value={formData.status_name}
+                        onChange={(e) => setFormData({...formData, status_name: e.target.value})}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      >
+                        <option value="Pending">Pending</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Rejected">Rejected</option>
+                      </select>
                     </div>
                   </div>
                   
@@ -396,6 +419,9 @@ export default function AdminPage() {
                         Date of Birth
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Images
                       </th>
                     </tr>
@@ -410,13 +436,21 @@ export default function AdminPage() {
                           {record.full_name}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {record.nationality}
+                          {getCountryName(record.nationality)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {record.passport_number}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {record.date_of_birth}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            ${record.status_name === 'Approved' ? 'bg-green-100 text-green-800' : 
+                              record.status_name === 'Rejected' ? 'bg-red-100 text-red-800' : 
+                              'bg-yellow-100 text-yellow-800'}`}>
+                            {record.status_name || 'Pending'}
+                          </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           <div className="flex flex-wrap gap-2">

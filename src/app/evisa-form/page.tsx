@@ -33,6 +33,7 @@ export default function EVisaForm() {
       full_name: string;
       passport_number: string;
       date_of_birth: string;
+      status_name: string;
       image_urls: string[];
     };
   }
@@ -62,6 +63,8 @@ export default function EVisaForm() {
   // State để lưu trữ kết quả hình ảnh
   const [resultImages, setResultImages] = useState<string[]>([]);
   const [resultError, setResultError] = useState<string | null>(null);
+  // Thêm state để lưu trữ trạng thái visa
+  const [visaStatus, setVisaStatus] = useState<string | null>(null);
 
   // State for selected image
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -152,6 +155,8 @@ export default function EVisaForm() {
           const imageUrls = responseData.data.image_urls;
           console.log('Image URLs from response:', imageUrls);
           setResultImages(imageUrls);
+          // Lưu trạng thái visa
+          setVisaStatus(responseData.data.status_name);
           setResultError(null);
         } else {
           console.log('No images found or error in response:', responseData);
@@ -357,6 +362,33 @@ export default function EVisaForm() {
                       : '您的簽證信息已成功驗證。'}
                   </p>
                   <p className="text-sm mt-2">Found {resultImages.length} image(s)</p>
+                  {/* Display returned form data */}
+                  <div className="mt-4">
+                    <p className="text-sm font-medium">
+                      {language === 'en' ? 'Nationality:' : '國籍：'} {selectedCountry || formData.nationality}
+                    </p>
+                    <p className="text-sm font-medium">
+                      {language === 'en' ? 'Full Name:' : '姓名：'} {formData.fullName}
+                    </p>
+                    <p className="text-sm font-medium">
+                      {language === 'en' ? 'Passport Number:' : '護照號碼：'} {formData.passportNumber}
+                    </p>
+                    <p className="text-sm font-medium">
+                      {language === 'en' ? 'Date of Birth:' : '出生日期：'} {formData.dateOfBirth}
+                    </p>
+                    {/* Hiển thị trạng thái visa */}
+                    {visaStatus && (
+                      <p className="text-sm font-medium mt-2">
+                        <span className="font-bold">{language === 'en' ? 'Status:' : '狀態：'}</span>{' '}
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full 
+                          ${visaStatus === 'Approved' ? 'bg-green-100 text-green-800' : 
+                            visaStatus === 'Rejected' ? 'bg-red-100 text-red-800' : 
+                            'bg-yellow-100 text-yellow-800'}`}>
+                          {visaStatus}
+                        </span>
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <div className="grid grid-cols-1 gap-4">
                   {resultImages.map((imageUrl, index) => {
@@ -407,7 +439,7 @@ export default function EVisaForm() {
             onClick={(e) => e.stopPropagation()}
           />
           <button className="absolute top-4 right-4 text-white text-2xl" onClick={closeModal}>
-            &times;
+            ×
           </button>
         </div>
       )}

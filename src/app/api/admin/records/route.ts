@@ -16,7 +16,7 @@ interface WorkerResponse {
 export async function GET() {
   try {
     // Call worker API to get all records
-    const response = await fetch('https://visa-webapp.transytrong20.workers.dev/api/records', {
+    const response = await fetch(`${process.env.R2_PUBLIC_URL}/api/records`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     
     // Forward the request to the worker API
-    const response = await fetch('https://visa-webapp.transytrong20.workers.dev/api/evisa', {
+    const response = await fetch(`${process.env.R2_PUBLIC_URL}/api/evisa`, {
       method: 'POST',
       headers: {
         'Authorization': 'Basic ' + Buffer.from(`${process.env.ADMIN_USERNAME}:${process.env.ADMIN_PASSWORD}`).toString('base64'),

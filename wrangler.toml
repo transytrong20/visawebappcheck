@@ -6,7 +6,7 @@ compatibility_date = "2024-01-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "evisa-db"
-database_id = "6fe9c3f8-fd4b-4ae6-8530-37804e51a58a"
+database_id = "5b8fa534-42aa-47c5-8d1e-3c99c8f765e4"
 
 # R2 bucket binding
 [[r2_buckets]]
@@ -14,5 +14,6 @@ binding = "BUCKET"
 bucket_name = "visa-webapp-storage"
 
 [vars]
-CLOUDFLARE_ACCOUNT_ID = "ed5ddf4c9d3c1ed215422e03e2f31b6f"
-R2_PUBLIC_URL = "https://visa-webapp-storage.r2.dev" 
+CLOUDFLARE_ACCOUNT_ID = "667fd7c332790393fa023bd8545985b7"
+R2_PUBLIC_URL = "https://visa-webapp.milenafonseca998.workers.dev"
+R2_PUBLIC_URL_IMAGE = "https://pub-9482cacc79b74257911fbde91923bc6a.r2.dev" 

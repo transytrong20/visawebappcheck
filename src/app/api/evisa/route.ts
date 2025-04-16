@@ -85,7 +85,7 @@ export async function POST(request: Request) {
       }
 
       console.log('Sending request to worker...')
-      const workerResponse = await fetch('https://visa-webapp.transytrong20.workers.dev/api/evisa', {
+      const workerResponse = await fetch(`${process.env.R2_PUBLIC_URL}/api/evisa`, {
         method: 'POST',
         body: workerFormData
       })
@@ -157,7 +157,7 @@ export async function GET(request: Request) {
     }
 
     // Forward request to worker
-    const workerUrl = `https://visa-webapp.transytrong20.workers.dev/api/evisa?nationality=${encodeURIComponent(nationality)}&fullName=${encodeURIComponent(fullName)}&passportNumber=${encodeURIComponent(passportNumber)}&dateOfBirth=${encodeURIComponent(dateOfBirth)}`
+    const workerUrl = `${process.env.R2_PUBLIC_URL}/api/evisa?nationality=${encodeURIComponent(nationality)}&fullName=${encodeURIComponent(fullName)}&passportNumber=${encodeURIComponent(passportNumber)}&dateOfBirth=${encodeURIComponent(dateOfBirth)}`
     console.log('Sending request to worker:', workerUrl)
     
     const response = await fetch(workerUrl)
