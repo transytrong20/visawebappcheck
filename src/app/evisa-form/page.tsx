@@ -265,6 +265,13 @@ export default function EVisaForm() {
     dateOfBirth: string;
   }
 
+  // Thêm interface cho API response
+  interface VisaResponse {
+    success: boolean;
+    imageUrl?: string;
+    error?: string;
+  }
+
   const [formData, setFormData] = useState<FormData>({
     nationality: '',
     fullName: '',
@@ -353,32 +360,27 @@ export default function EVisaForm() {
 
     if (validateForm()) {
       try {
-        // Gửi yêu cầu đến API endpoint của bạn để kiểm tra dữ liệu
-        const response = await fetch('/api/check-evisa', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            nationality: formData.nationality,
-            fullName: formData.fullName,
-            passportNumber: formData.passportNumber,
-            dateOfBirth: formData.dateOfBirth,
-          }),
+        // Kiểm tra thông tin visa
+        const response = await fetch(`/api/evisa?nationality=${formData.nationality}&fullName=${encodeURIComponent(formData.fullName)}&passportNumber=${encodeURIComponent(formData.passportNumber)}&dateOfBirth=${formData.dateOfBirth}`, {
+          method: 'GET',
         });
 
-        const data = await response.json();
+        const data = await response.json() as VisaResponse;
 
-        if (response.ok && data.imageUrl) {
+        if (response.ok && data.success && data.imageUrl) {
           setResultImage(data.imageUrl);
           setResultError(null);
         } else {
-          setResultError(language === 'en' ? 'No matching record found.' : '未找到匹配的記錄。');
+          setResultError(language === 'en' 
+            ? data.error || 'No matching record found.' 
+            : data.error || '未找到匹配的記錄。');
           setResultImage(null);
         }
       } catch (error) {
         console.error('Error checking eVisa:', error);
-        setResultError(language === 'en' ? 'An error occurred. Please try again.' : '發生錯誤，請重試。');
+        setResultError(language === 'en' 
+          ? 'An error occurred while checking your visa. Please try again.' 
+          : '檢查簽證時發生錯誤，請重試。');
         setResultImage(null);
       }
     }
@@ -553,21 +555,40 @@ export default function EVisaForm() {
             {/* Kết quả */}
             {resultImage && (
               <div className="mt-6">
-                <h2 className="text-lg font-bold">
-                  {language === 'en' ? 'Visa Image' : '簽證圖片'}
+                <h2 className="text-lg font-bold mb-4">
+                  {language === 'en' ? 'Visa Information Found' : '找到簽證信息'}
                 </h2>
-                <Image
-                  src={resultImage}
-                  alt="Visa Image"
-                  width={500}
-                  height={300}
-                  className="mt-2 rounded"
-                />
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                  <p className="text-green-700">
+                    {language === 'en' 
+                      ? 'Your visa information has been verified successfully.' 
+                      : '您的簽證信息已成功驗證。'}
+                  </p>
+                </div>
+                <div className="border rounded-lg overflow-hidden">
+                  <div className="relative w-full" style={{ paddingTop: '60%' }}>
+                    <Image
+                      src={resultImage}
+                      alt="Visa Image"
+                      fill
+                      style={{ objectFit: 'contain' }}
+                      className="absolute top-0 left-0"
+                      unoptimized
+                    />
+                  </div>
+                </div>
               </div>
             )}
             {resultError && (
-              <div className="mt-6 text-red-500">
-                {resultError}
+              <div className="mt-6">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <p className="text-red-700">{resultError}</p>
+                  <p className="text-red-600 mt-2 text-sm">
+                    {language === 'en'
+                      ? 'Please check your information and try again.'
+                      : '請檢查您的信息並重試。'}
+                  </p>
+                </div>
               </div>
             )}
           </div>

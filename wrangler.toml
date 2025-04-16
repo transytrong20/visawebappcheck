@@ -1,0 +1,18 @@
+name = "visa-webapp"
+main = "src/worker.ts"
+compatibility_date = "2024-01-01"
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "evisa-db"
+database_id = "ae60b60f-59b9-4f73-8177-e91ac9d1a12e"
+
+# R2 bucket binding
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "visa-webapp-storage"
+
+[vars]
+CLOUDFLARE_ACCOUNT_ID = "ed5ddf4c9d3c1ed215422e03e2f31b6f"
+R2_PUBLIC_URL = "https://visa-webapp-storage.r2.dev" 
