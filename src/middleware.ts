@@ -33,7 +33,7 @@ export function middleware(request: NextRequest) {
     const [user, pwd] = Buffer.from(auth, 'base64').toString().split(':');
 
     // Replace these with environment variables in a real application
-    if (user !== 'admin' || pwd !== 'admin123') {
+    if (user !== process.env.ADMIN_USERNAME || pwd !== process.env.ADMIN_PASSWORD) {
       return new NextResponse(null, {
         status: 401,
         headers: {

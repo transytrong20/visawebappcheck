@@ -20,7 +20,7 @@ export async function GET() {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
-        'Authorization': 'Basic ' + Buffer.from('admin:admin123').toString('base64'),
+        'Authorization': 'Basic ' + Buffer.from(`${process.env.ADMIN_USERNAME}:${process.env.ADMIN_PASSWORD}`).toString('base64'),
       },
     });
 
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
     const response = await fetch('https://visa-webapp.transytrong20.workers.dev/api/evisa', {
       method: 'POST',
       headers: {
-        'Authorization': 'Basic ' + Buffer.from('admin:admin123').toString('base64'),
+        'Authorization': 'Basic ' + Buffer.from(`${process.env.ADMIN_USERNAME}:${process.env.ADMIN_PASSWORD}`).toString('base64'),
       },
       body: formData, // Forward the form data as is
     });
