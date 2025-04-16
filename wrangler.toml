@@ -6,7 +6,7 @@ compatibility_date = "2024-01-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "evisa-db"
-database_id = "ae60b60f-59b9-4f73-8177-e91ac9d1a12e"
+database_id = "6fe9c3f8-fd4b-4ae6-8530-37804e51a58a"
 
 # R2 bucket binding
 [[r2_buckets]]

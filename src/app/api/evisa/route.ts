@@ -1,5 +1,20 @@
 import { NextResponse } from 'next/server'
 
+// Định nghĩa interface cho response data
+interface WorkerResponse {
+  success: boolean;
+  message: string;
+  error?: string;
+  data?: {
+    id: number;
+    nationality: string;
+    full_name: string;
+    passport_number: string;
+    date_of_birth: string;
+    image_urls: string[];
+  };
+}
+
 // POST /api/evisa - Thêm thông tin visa mới
 export async function POST(request: Request) {
   try {
@@ -8,63 +23,89 @@ export async function POST(request: Request) {
     const fullName = formData.get('fullName')?.toString().replace(/"/g, '')
     const passportNumber = formData.get('passportNumber')?.toString().replace(/"/g, '')
     const dateOfBirth = formData.get('dateOfBirth')?.toString().replace(/"/g, '')
-    const visaImage = formData.get('visaImage') as File | null
+    
+    // Chấp nhận cả visaImage và visaImages
+    let visaImages: File[] = []
+    const singleImages = formData.getAll('visaImage') as File[] // Lấy tất cả visaImage
+    const multipleImages = formData.getAll('visaImages') as File[] // Lấy tất cả visaImages
+    
+    // Kết hợp cả hai loại ảnh
+    visaImages = [...singleImages, ...multipleImages]
 
-    console.log('Processing request with data:', { 
-      nationality, 
-      fullName, 
-      passportNumber, 
+    console.log('Received form data:', {
+      nationality,
+      fullName,
+      passportNumber,
       dateOfBirth,
-      hasImage: !!visaImage,
-      imageType: visaImage?.type,
-      imageSize: visaImage?.size
+      singleImagesCount: singleImages.length,
+      multipleImagesCount: multipleImages.length,
+      totalImages: visaImages.length
     })
 
-    if (!nationality || !fullName || !passportNumber || !dateOfBirth || !visaImage) {
+    if (!nationality || !fullName || !passportNumber || !dateOfBirth || visaImages.length === 0) {
+      console.log('Validation failed:', {
+        nationality: !nationality,
+        fullName: !fullName,
+        passportNumber: !passportNumber,
+        dateOfBirth: !dateOfBirth,
+        visaImages: visaImages.length === 0
+      })
       return NextResponse.json({ 
-        error: 'All fields are required',
+        error: 'All fields are required and at least one image must be provided',
         details: {
           nationality: !nationality,
           fullName: !fullName,
           passportNumber: !passportNumber,
           dateOfBirth: !dateOfBirth,
-          visaImage: !visaImage
+          visaImages: visaImages.length === 0
         }
       }, { status: 400 })
     }
 
     try {
-      // Create a new FormData object to send to worker
+      console.log('Starting to process images...')
+      
+      // Create a single FormData with all images
       const workerFormData = new FormData()
       workerFormData.append('nationality', nationality)
       workerFormData.append('fullName', fullName)
       workerFormData.append('passportNumber', passportNumber)
       workerFormData.append('dateOfBirth', dateOfBirth)
       
-      // Handle the image file
-      const imageBlob = new Blob([await visaImage.arrayBuffer()], { type: visaImage.type })
-      workerFormData.append('visaImage', imageBlob, visaImage.name)
+      // Add all images to the same request
+      for (const visaImage of visaImages) {
+        console.log('Processing image:', {
+          name: visaImage.name,
+          type: visaImage.type,
+          size: visaImage.size
+        })
+        
+        const imageBlob = new Blob([await visaImage.arrayBuffer()], { type: visaImage.type })
+        workerFormData.append('visaImages', imageBlob, visaImage.name)
+      }
 
       console.log('Sending request to worker...')
-
-      // Send request to worker
       const workerResponse = await fetch('https://visa-webapp.transytrong20.workers.dev/api/evisa', {
         method: 'POST',
         body: workerFormData
       })
 
       console.log('Worker response status:', workerResponse.status)
-      const data = await workerResponse.json()
-      console.log('Worker response:', data)
+      const responseData = await workerResponse.json() as WorkerResponse
+      console.log('Worker response data:', responseData)
 
       if (!workerResponse.ok) {
-        const errorMessage = typeof data === 'object' && data && 'error' in data
-          ? String(data.error)
-          : 'Failed to process request'
-        throw new Error(errorMessage)
+        throw new Error(responseData.error || 'Failed to save data')
       }
 
-      return NextResponse.json(data)
+      // Get image URLs from response
+      const imageUrls = responseData.data?.image_urls || []
+      console.log('Final image URLs:', imageUrls)
+
+      return NextResponse.json({
+        success: true,
+        imageUrls
+      })
     } catch (error) {
       console.error('Error saving data:', error)
       return NextResponse.json({ 
@@ -90,7 +131,20 @@ export async function GET(request: Request) {
     const passportNumber = searchParams.get('passportNumber')?.replace(/"/g, '')
     const dateOfBirth = searchParams.get('dateOfBirth')?.replace(/"/g, '')
 
+    console.log('GET request params:', {
+      nationality,
+      fullName,
+      passportNumber,
+      dateOfBirth
+    })
+
     if (!nationality || !fullName || !passportNumber || !dateOfBirth) {
+      console.log('GET validation failed:', {
+        nationality: !nationality,
+        fullName: !fullName,
+        passportNumber: !passportNumber,
+        dateOfBirth: !dateOfBirth
+      })
       return NextResponse.json({ 
         error: 'All fields are required',
         details: {
@@ -104,15 +158,29 @@ export async function GET(request: Request) {
 
     // Forward request to worker
     const workerUrl = `https://visa-webapp.transytrong20.workers.dev/api/evisa?nationality=${encodeURIComponent(nationality)}&fullName=${encodeURIComponent(fullName)}&passportNumber=${encodeURIComponent(passportNumber)}&dateOfBirth=${encodeURIComponent(dateOfBirth)}`
+    console.log('Sending request to worker:', workerUrl)
     
     const response = await fetch(workerUrl)
-    const data = await response.json()
+    console.log('Worker response status:', response.status)
+    const data = await response.json() as WorkerResponse
+    console.log('Worker response data:', data)
 
     if (!response.ok) {
       const errorMessage = typeof data === 'object' && data && 'error' in data
         ? String(data.error)
         : 'Failed to check visa'
       throw new Error(errorMessage)
+    }
+
+    // Đảm bảo response luôn trả về mảng imageUrls
+    if (data.success) {
+      const result = {
+        success: true,
+        message: data.message,
+        data: data.data // Pass through the entire data object from worker
+      }
+      console.log('Final response:', result)
+      return NextResponse.json(result)
     }
 
     return NextResponse.json(data)

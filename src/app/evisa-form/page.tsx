@@ -266,10 +266,17 @@ export default function EVisaForm() {
   }
 
   // Thêm interface cho API response
-  interface VisaResponse {
+  interface ApiResponse {
     success: boolean;
-    imageUrl?: string;
-    error?: string;
+    message: string;
+    data?: {
+      id: number;
+      nationality: string;
+      full_name: string;
+      passport_number: string;
+      date_of_birth: string;
+      image_urls: string[];
+    };
   }
 
   const [formData, setFormData] = useState<FormData>({
@@ -295,7 +302,7 @@ export default function EVisaForm() {
   const [errors, setErrors] = useState<FormErrors>({});
 
   // State để lưu trữ kết quả hình ảnh
-  const [resultImage, setResultImage] = useState<string | null>(null);
+  const [resultImages, setResultImages] = useState<string[]>([]);
   const [resultError, setResultError] = useState<string | null>(null);
 
   // Lọc danh sách quốc gia
@@ -360,28 +367,44 @@ export default function EVisaForm() {
 
     if (validateForm()) {
       try {
-        // Kiểm tra thông tin visa
-        const response = await fetch(`/api/evisa?nationality=${formData.nationality}&fullName=${encodeURIComponent(formData.fullName)}&passportNumber=${encodeURIComponent(formData.passportNumber)}&dateOfBirth=${formData.dateOfBirth}`, {
+        setResultError(null);
+        setResultImages([]);
+        
+        console.log('GET request params:', formData);
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, '');
+        const apiUrl = `${baseUrl}/evisa?nationality=${formData.nationality}&fullName=${encodeURIComponent(formData.fullName)}&passportNumber=${encodeURIComponent(formData.passportNumber)}&dateOfBirth=${formData.dateOfBirth}`;
+        console.log('Sending request to worker:', apiUrl);
+
+        const response = await fetch(apiUrl, {
           method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          }
         });
 
-        const data = await response.json() as VisaResponse;
+        console.log('Worker response status:', response.status);
+        const responseData = await response.json() as ApiResponse;
+        console.log('Worker response data:', responseData);
 
-        if (response.ok && data.success && data.imageUrl) {
-          setResultImage(data.imageUrl);
+        if (response.ok && responseData.success && responseData.data?.image_urls) {
+          // Use the URLs directly from the response
+          const imageUrls = responseData.data.image_urls;
+          console.log('Image URLs from response:', imageUrls);
+          setResultImages(imageUrls);
           setResultError(null);
         } else {
+          console.log('No images found or error in response:', responseData);
           setResultError(language === 'en' 
-            ? data.error || 'No matching record found.' 
-            : data.error || '未找到匹配的記錄。');
-          setResultImage(null);
+            ? responseData.message || 'No visa information found.' 
+            : responseData.message || '未找到簽證信息。');
+          setResultImages([]);
         }
       } catch (error) {
         console.error('Error checking eVisa:', error);
         setResultError(language === 'en' 
           ? 'An error occurred while checking your visa. Please try again.' 
           : '檢查簽證時發生錯誤，請重試。');
-        setResultImage(null);
+        setResultImages([]);
       }
     }
   };
@@ -553,7 +576,7 @@ export default function EVisaForm() {
             </form>
 
             {/* Kết quả */}
-            {resultImage && (
+            {resultImages && resultImages.length > 0 && (
               <div className="mt-6">
                 <h2 className="text-lg font-bold mb-4">
                   {language === 'en' ? 'Visa Information Found' : '找到簽證信息'}
@@ -564,18 +587,34 @@ export default function EVisaForm() {
                       ? 'Your visa information has been verified successfully.' 
                       : '您的簽證信息已成功驗證。'}
                   </p>
+                  <p className="text-sm mt-2">Found {resultImages.length} image(s)</p>
                 </div>
-                <div className="border rounded-lg overflow-hidden">
-                  <div className="relative w-full" style={{ paddingTop: '60%' }}>
-                    <Image
-                      src={resultImage}
-                      alt="Visa Image"
-                      fill
-                      style={{ objectFit: 'contain' }}
-                      className="absolute top-0 left-0"
-                      unoptimized
-                    />
-                  </div>
+                <div className="grid grid-cols-1 gap-4">
+                  {resultImages.map((imageUrl, index) => {
+                    console.log(`Rendering image ${index}:`, imageUrl);
+                    return (
+                      <div key={index} className="border rounded-lg p-4">
+                        <img
+                          src={imageUrl}
+                          alt={`Visa Image ${index + 1}`}
+                          className="w-full h-auto max-h-[500px] object-contain mx-auto"
+                          style={{
+                            display: 'block',
+                            backgroundColor: '#f8f9fa'
+                          }}
+                          onError={(e) => {
+                            console.error(`Error loading image ${index}:`, imageUrl);
+                            const imgElement = e.target as HTMLImageElement;
+                            imgElement.style.display = 'none';
+                            imgElement.parentElement?.classList.add('hidden');
+                          }}
+                          onLoad={() => {
+                            console.log(`Image ${index} loaded successfully:`, imageUrl);
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
