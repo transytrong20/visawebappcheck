@@ -56,4 +56,45 @@ export async function GET() {
       { status: 500 }
     );
   }
+}
+
+export async function POST(request: Request) {
+  try {
+    // Get form data from the request
+    const formData = await request.formData();
+    
+    // Forward the request to the worker API
+    const response = await fetch('https://visa-webapp.transytrong20.workers.dev/api/evisa', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Basic ' + Buffer.from('admin:admin123').toString('base64'),
+      },
+      body: formData, // Forward the form data as is
+    });
+
+    console.log('Worker response status:', response.status);
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('Worker error response:', errorData);
+      throw new Error(`Failed to create record: ${errorData}`);
+    }
+
+    const data = await response.json();
+    console.log('Worker response data:', data);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Record created successfully'
+    });
+  } catch (error) {
+    console.error('Error creating record:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to create record'
+      },
+      { status: 500 }
+    );
+  }
 } 
