@@ -1,0 +1,59 @@
+import { NextResponse } from 'next/server';
+
+interface WorkerResponse {
+  success: boolean;
+  message: string;
+  records: Array<{
+    id: number;
+    nationality: string;
+    full_name: string;
+    passport_number: string;
+    date_of_birth: string;
+    image_urls: string[];
+  }>;
+}
+
+export async function GET() {
+  try {
+    // Call worker API to get all records
+    const response = await fetch('https://visa-webapp.transytrong20.workers.dev/api/records', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Basic ' + Buffer.from('admin:admin123').toString('base64'),
+      },
+    });
+
+    console.log('Worker response status:', response.status);
+    
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('Worker error response:', errorData);
+      throw new Error(`Failed to fetch records: ${errorData}`);
+    }
+
+    const data = await response.json() as WorkerResponse;
+    console.log('Worker response data:', data);
+    
+    if (!data.success) {
+      throw new Error(data.message || 'Failed to fetch records from worker');
+    }
+
+    // Transform the data to match the expected format
+    const records = Array.isArray(data.records) ? data.records : [];
+
+    return NextResponse.json({
+      success: true,
+      records: records
+    });
+  } catch (error) {
+    console.error('Error fetching records:', error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: error instanceof Error ? error.message : 'Failed to fetch records'
+      },
+      { status: 500 }
+    );
+  }
+} 

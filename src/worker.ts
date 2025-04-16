@@ -348,6 +348,71 @@ const worker = {
         }
       }
 
+      // API endpoint for fetching all records
+      if (url.pathname === "/api/records") {
+        try {
+          interface Record {
+            id: number;
+            nationality: string;
+            full_name: string;
+            passport_number: string;
+            date_of_birth: string;
+            image_urls: string | null;
+          }
+
+          const result = await env.DB.prepare(`
+            SELECT 
+              vh.id,
+              vh.nationality,
+              vh.full_name,
+              vh.passport_number,
+              vh.date_of_birth,
+              GROUP_CONCAT(vi.image_url) as image_urls
+            FROM visa_holders vh
+            LEFT JOIN visa_images vi ON vh.id = vi.visa_holder_id
+            GROUP BY vh.id
+            ORDER BY vh.id DESC
+          `).all<Record>();
+
+          const records = result.results.map((record: Record) => ({
+            id: record.id,
+            nationality: record.nationality,
+            full_name: record.full_name,
+            passport_number: record.passport_number,
+            date_of_birth: record.date_of_birth,
+            image_urls: record.image_urls 
+              ? record.image_urls.split(',').map((url: string) => {
+                  const cleanUrl = url.trim();
+                  return `https://pub-d007d74036654473a8d7d9d0a663708b.r2.dev/${cleanUrl}`;
+                })
+              : []
+          }));
+
+          return new Response(JSON.stringify({
+            success: true,
+            message: 'Records fetched successfully',
+            records: records
+          }), {
+            headers: {
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+            },
+          });
+        } catch (error) {
+          console.error('Error fetching records:', error);
+          return new Response(JSON.stringify({
+            success: false,
+            message: error instanceof Error ? error.message : 'Failed to fetch records'
+          }), {
+            status: 500,
+            headers: {
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+            },
+          });
+        }
+      }
+
       // Handle unknown routes
       return new Response("Not found", { 
         status: 404,
